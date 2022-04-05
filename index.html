@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+  <title>聊天机器人</title>
+
+
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- 头部 Header 区域 -->
+    <div class="header">
+      <h3>小思同学</h3>
+      <img src="img/person01.png" alt="icon" />
+    </div>
+    <!-- 中间 聊天内容区域 -->
+    <div class="main">
+      <ul class="talk_list" style="top: 0px;" id="talk_list">
+        <li class="left_word">
+          <img src="img/person01.png" /> <span>你好</span>
+        </li>
+        <!-- <li class="right_word">
+          <img src="img/person02.png" /> <span>你好哦</span>
+        </li> -->
+
+      </ul>
+      <div class="drag_bar" style="display: none;">
+        <div class="drager ui-draggable ui-draggable-handle" style="display: none; height: 412.628px;"></div>
+      </div>
+    </div>
+    <!-- 底部 消息编辑区域 -->
+    <div class="footer">
+      <img src="img/person02.png" alt="icon" />
+      <input type="text" placeholder="说的什么吧..." class="input_txt" id="txtSend" />
+      <input type="button" value="发 送" class="input_sub" id="butSend" />
+
+    </div>
+    <!-- <div style="height: 20px;width: 100%; top: 80%; position: relative;background-color: rgb(255, 255, 255);">
+      <a href="https://beian.miit.gov.cn/#/Integrated/index" style="text-align: center;color: rgb(207, 187, 187);" >
+        <p>豫ICP备2022006595号-1</p></a>
+     </div> -->
+  </div>
+  <!-- 只要为 audio 指定了新的 src 属性，而且指定 autoplay 语音就会自动播放 -->
+  <audio src="" id="voice" autoplay style="display:none"></audio>
+  <script type="text/javascript" src="js/scroll.js"></script>
+  <!-- 
+  <div  >
+    <a href="https://beian.miit.gov.cn/#/Integrated/index" style="text-align: center;" >
+  <p></p></a>
+</div> -->
+
+  <script>
+    $(function () {
+
+      // 初始化右侧滚动条
+      // 这个方法定义在scroll.js中
+      resetui()
+
+      //将输入的内容渲染到聊天窗口
+      $('#butSend').on('click', function () {
+        var text = $('#txtSend').val().trim()
+        if (text.length <= 0) {
+          return $('txtSend').val('')
+        }
+        //字符串不允许回车换行
+        $('#talk_list').append(' <li class="right_word"><img src="img/person02.png" /> <span>' + text +'</span></li>')
+
+        $('#txtSend').val('')
+
+        // 初始化右侧滚动条
+        resetui()
+
+        getMsg(text)
+
+      })
+      //获取聊天机器人发送回来的数据
+      function getMsg(text) {
+        $.ajax({
+          type: 'GET',
+          url: 'http://www.liulongbin.top:3006/api/robot',
+          data: {
+            spoken: text,
+          },
+          success: function (res) {
+            // console.log(res);
+
+            if (res.message == "success") {
+              var msg = res.data.info.text
+              $('#talk_list').append('<li class="left_word"><img src="img/person01.png" /> <span>' + msg +
+                '</span></li>')
+              resetui()
+
+              getVoice(msg)
+            }
+          }
+
+        })
+      }
+
+      function getVoice(text) {
+        $.ajax({
+          type: 'GET',
+          url: 'http://www.liulongbin.top:3006/api/synthesize',
+          data: {
+            text,
+          },
+          success: function (res) {
+            //console.log(res);
+
+            if (res.status === 200) {
+              $('#voice').attr('src', res.voiceUrl)
+            }
+          }
+        })
+      }
+
+      //让文本框相应回车事件，提交消息    
+      $('#txtSend').on('keyup', function (e) {
+        //  e.keyCode 获取当前按键的编码   e 事件对象
+
+        if (e.keyCode === 13) {
+          $('#butSend').click()
+        }
+      })
+
+    })
+  </script>
+</body>
+
+</html>
